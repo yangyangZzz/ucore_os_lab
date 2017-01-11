@@ -253,7 +253,12 @@ read_eip(void) {
     asm volatile("movl 4(%%ebp), %0" : "=r" (eip));
     return eip;
 }
-
+/*static __noinline uint32_t
+read_ebp(void) {
+    uint32_t ebp;
+    asm volatile("movl (%%ebp), %0" : "=r" (ebp));
+    return ebp;
+}*/
 /* *
  * print_stackframe - print a list of the saved eip values from the nested 'call'
  * instructions that led to the current point of execution
@@ -302,5 +307,25 @@ print_stackframe(void) {
       *           NOTICE: the calling funciton's return addr eip  = ss:[ebp+4]
       *                   the calling funciton's ebp = ss:[ebp]
       */
+	uint32_t eip = read_eip();
+	uint32_t ebp = read_ebp();
+//	uint32_t first_argv, sec_argv, third_argv, for_argv;
+//	asm volatile("movl 8(%%ebp), %0" : "=r" (first_argv));
+//	asm volatile("movl 8(%%ebp), %0" : "=r" (sec_argv));
+//	asm volatile("movl 8(%%ebp), %0" : "=r" (third_argv));
+//	asm volatile("movl 8(%%ebp), %0" : "=r" (for_argv));
+//	cprintf("ebp:0x%08x eip:0x%08x args:0x%08x 0x%08x 0x%08x 0x%08x \n", ebp, eip, first_argv, sec_argv, third_argv, for_argv);
+//	print_debuginfo(eip-1);
+
+	for(unsigned i = 0;ebp!=0 && i < STACKFRAME_DEPTH; ++i){
+		cprintf("ebp:0x%08x eip:0x%08x args:", ebp, eip);
+		for(unsigned j = 0; j < 4; ++j){
+			cprintf("0x%08x ", ebp+2+i);
+		}
+		cprintf("\n");
+		print_debuginfo(eip-1);
+		eip = ((uint32_t*)ebp)[1];
+		ebp = ((uint32_t*)ebp)[0];
+	}
 }
 
